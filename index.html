@@ -2,33 +2,160 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>SardaarJi - Digital Menu</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <style>
         :root { --primary: #e31e24; --veg: #27ae60; --nonveg: #c0392b; --dark: #1a1a1a; }
-        body { font-family: 'Segoe UI', Arial, sans-serif; margin: 0; background: #f9f9f9; padding-bottom: 180px; }
         
-        /* Fixed Header with Search */
-        .header { background: white; padding: 15px; position: sticky; top: 0; z-index: 1000; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        /* Smooth scrolling and prevent side-scroll */
+        body { 
+            font-family: 'Segoe UI', Arial, sans-serif; 
+            margin: 0; 
+            background: #f9f9f9; 
+            padding-bottom: 250px; /* Space for the cart */
+            overflow-x: hidden;
+        }
+        
+        /* Header Fix */
+        .header { 
+            background: white; 
+            padding: 15px; 
+            position: sticky; 
+            top: 0; 
+            z-index: 1000; 
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1); 
+        }
         .search-bar { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 25px; margin-top: 10px; box-sizing: border-box; outline: none; }
         .filters { display: flex; gap: 10px; margin-top: 10px; }
-        .filter-btn { flex: 1; padding: 8px; border: 1px solid #ddd; border-radius: 20px; background: white; font-size: 12px; font-weight: bold; cursor: pointer; }
+        .filter-btn { flex: 1; padding: 8px; border: 1px solid #ddd; border-radius: 20px; background: white; font-size: 12px; font-weight: bold; cursor: pointer; transition: 0.3s; }
         .filter-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
 
-        /* Menu Styling */
+        /* Menu Items */
         .section-title { padding: 15px; font-weight: 800; color: var(--primary); background: #eee; text-transform: uppercase; font-size: 13px; }
-        .item { background: white; padding: 15px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; }
+        .item { background: white; padding: 15px; border-bottom: 1px solid #eee; }
+        .item-row-top { display: flex; justify-content: space-between; align-items: center; }
         .item-info { flex: 1; }
         .item-name { font-weight: 700; font-size: 16px; margin-bottom: 4px; display: flex; align-items: center; }
         .dot { width: 10px; height: 10px; border-radius: 50%; margin-right: 8px; border: 1px solid black; }
         .veg-dot { background: var(--veg); }
         .non-dot { background: var(--nonveg); }
         
-        .add-btn { background: white; color: var(--primary); border: 2px solid var(--primary); padding: 6px 15px; border-radius: 6px; font-weight: 800; cursor: pointer; }
-        #cart-panel { position: fixed; bottom: 0; width: 100%; background: var(--dark); color: white; padding: 20px; border-radius: 20px 20px 0 0; display: none; }
-        .order-btn { background: var(--veg); color: white; border: none; padding: 15px; width: 100%; border-radius: 10px; font-weight: 800; font-size: 16px; cursor: pointer; }
+        .custom-note { width: 100%; margin-top: 10px; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; box-sizing: border-box; background: #fff; }
+        .add-btn { background: white; color: var(--primary); border: 2px solid var(--primary); padding: 8px 18px; border-radius: 8px; font-weight: 800; cursor: pointer; }
+        
+        /* FIXED CART PANEL (The Solution) */
+        #cart-panel { 
+            position: fixed; 
+            bottom: 0; 
+            left: 0;
+            right: 0;
+            width: 100%; 
+            background: var(--dark); 
+            color: white; 
+            padding: 20px; 
+            border-radius: 20px 20px 0 0; 
+            display: none; 
+            box-sizing: border-box; 
+            z-index: 2000;
+            max-height: 80vh; /* Prevents it from covering whole screen */
+            display: flex;
+            flex-direction: column;
+        }
+        
+        #cart-list { 
+            max-height: 200px; 
+            overflow-y: auto; /* Makes items scrollable if list is long */
+            margin-bottom: 10px;
+        }
+
+        .cart-item { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            padding: 10px 0; 
+            border-bottom: 1px solid #333; 
+        }
+        
+        .remove-btn { color: #ff4d4d; background: none; border: none; font-weight: bold; cursor: pointer; padding: 5px 10px; }
+        
+        .total-row { 
+            display: flex; 
+            justify-content: space-between; 
+            padding: 15px 0; 
+            font-weight: bold; 
+            font-size: 18px;
+            border-top: 1px solid #444;
+        }
+
+        .order-btn { 
+            background: var(--veg); 
+            color: white; 
+            border: none; 
+            padding: 18px; 
+            width: 100%; 
+            border-radius: 12px; 
+            font-weight: 800; 
+            font-size: 16px; 
+            cursor: pointer;
+        }
+        .food-img {
+  width: 100%;
+  height: 180px;
+  object-fit: cover;
+  border-radius: 12px;
+  margin-bottom: 8px;
+}
+.item img {
+  transition: 0.3s;
+}
+
+.item:hover img {
+  transform: scale(1.05);
+}   
+
+.item {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+.food-img {
+  width: 120px;
+  height: 100px;
+  object-fit: cover;
+}
+
+         .cart-item button {
+                  border: none;
+                 background: #444;
+                 color: white;
+                 padding: 5px 8px;
+                  border-radius: 5px;
+                 cursor: pointer;
+   }
+        
+          .bill-box {
+  margin-top: 10px;
+}
+
+.bill-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 6px 0;
+  font-size: 14px;
+}
+
+.bill-row.total {
+  font-size: 18px;
+  font-weight: bold;
+  border-top: 1px solid #444;
+  margin-top: 8px;
+  padding-top: 10px;
+}
+
+      
+       
     </style>
 </head>
 <body>
@@ -48,13 +175,37 @@
 
 <div id="menu-container"></div>
 
+<!-- ✅ CART ITEMS -->
 <div id="cart-panel">
-    <div id="cart-list" style="max-height: 120px; overflow-y: auto; font-size: 14px;"></div>
-    <div style="display:flex; justify-content:space-between; padding: 15px 0; font-weight:bold;">
-        <span>Total Bill:</span><span>₹<span id="total-price">0</span></span>
-    </div>
-    <button class="order-btn" onclick="sendOrder()">🚀 PLACE ORDER</button>
+    <div id="cart-list"></div>
 </div>
+
+<!-- ✅ BILL -->
+<div class="bill-box">
+
+    <div class="bill-row">
+        <span>Subtotal</span>
+        <span>₹<span id="subtotal">0</span></span>
+    </div>
+
+    <div class="bill-row">
+        <span>CGST (9%)</span>
+        <span>₹<span id="cgst">0</span></span>
+    </div>
+
+    <div class="bill-row">
+        <span>SGST (9%)</span>
+        <span>₹<span id="sgst">0</span></span>
+    </div>
+
+    <div class="bill-row total">
+        <span>Total Bill</span>
+        <span>₹<span id="total-price">0</span></span>
+    </div>
+
+</div>
+
+<button class="order-btn" onclick="sendOrder()">🧾 CHECKOUT</button>
 
 <script>
     const firebaseConfig = {
@@ -68,126 +219,112 @@
     };
     firebase.initializeApp(firebaseConfig);
     const database = firebase.database();
-
-    const menuData = [
-    {
-        category: "Veg Main Course (Gravy)",
-        items: [
-            { name: "Veg Keema Kasturi", price: 280, type: "veg" },
-            { name: "Dum Aloo Punjabi", price: 260, type: "veg" },
-            { name: "Tandoori Aloo Masala", price: 280, type: "veg" },
-            { name: "Dal Tadka / Fry", price: 140, type: "veg" },
-            { name: "Dal Makhani", price: 195, type: "veg" },
-            { name: "Paneer Tikka Khada Masala", price: 300, type: "veg" },
-            { name: "Paneer Tikka Masala", price: 300, type: "veg" },
-            { name: "Paneer Handi", price: 280, type: "veg" },
-            { name: "Malai Kofta", price: 300, type: "veg" },
-            { name: "Veg Hyderabadi", price: 280, type: "veg" },
-            { name: "Veg Kolhapuri", price: 260, type: "veg" },
-            { name: "Mix Vegetable", price: 240, type: "veg" }
-        ]
-    },
-    {
-        category: "Non-Veg Main Course (Gravy)",
-        items: [
-            { name: "Butter Chicken (Boneless)", price: 320, type: "non" },
-            { name: "Chicken Tikka Masala", price: 320, type: "non" },
-            { name: "Chicken Bhuna Gravy", price: 280, type: "non" },
-            { name: "Chicken Handi (Half)", price: 280, type: "non" },
-            { name: "Chicken Handi (Full)", price: 520, type: "non" },
-            { name: "Chicken Roghan Josh", price: 280, type: "non" },
-            { name: "Chicken Masala", price: 280, type: "non" },
-            { name: "Mutton in Choice of Prep", price: 350, type: "non" },
-            { name: "Mutton Roghan Josh", price: 350, type: "non" },
-            { name: "Egg Curry / Masala", price: 200, type: "non" },
-            { name: "Egg Burji (2 Eggs)", price: 120, type: "non" }
-        ]
-    },
-    {
-        category: "Fish & Prawns",
-        items: [
-            { name: "Fish Tikka Masala", price: 420, type: "non" },
-            { name: "Fish Curry (Basa)", price: 380, type: "non" },
-            { name: "Prawns Masala", price: 450, type: "non" },
-            { name: "Prawns Curry", price: 450, type: "non" }
-        ]
-    },
-    {
-        category: "Biryani & Rice",
-        items: [
-            { name: "Veg Dum Biryani", price: 260, type: "veg" },
-            { name: "Paneer Tikka Biryani", price: 300, type: "veg" },
-            { name: "Chicken Dum Biryani", price: 260, type: "non" },
-            { name: "Butter Chicken Biryani", price: 320, type: "non" },
-            { name: "Mutton Biryani", price: 360, type: "non" },
-            { name: "Egg Biryani", price: 240, type: "non" },
-            { name: "Jeera Rice", price: 140, type: "veg" },
-            { name: "Steamed Rice", price: 120, type: "veg" }
-        ]
-    },
-    {
-        category: "Rotis & Naan",
-        items: [
-            { name: "Tandoori Roti (Plain)", price: 25, type: "veg" },
-            { name: "Tandoori Roti (Butter)", price: 30, type: "veg" },
-            { name: "Garlic Naan", price: 40, type: "veg" },
-            { name: "Butter Naan", price: 35, type: "veg" },
-            { name: "Lachcha Paratha", price: 40, type: "veg" },
-            { name: "Butter Kulcha", price: 60, type: "veg" },
-            { name: "Cheese Paratha", price: 150, type: "veg" },
-            { name: "Missi Roti", price: 40, type: "veg" }
-        ]
-    },
-    {
-        category: "Dessert & Drinks",
-        items: [
-            { name: "Sitafal Cream / Fruit Cream", price: 100, type: "veg" },
-            { name: "Sancha Ice Cream (Litchi)", price: 85, type: "veg" },
-            { name: "Sancha Ice Cream (Mango)", price: 85, type: "veg" },
-            { name: "Sweet / Salted Lassi", price: 60, type: "veg" },
-            { name: "Mango / Rose Lassi", price: 70, type: "veg" },
-            { name: "Cold Drink (Can)", price: 40, type: "veg" },
-            { name: "Mineral Water (1 Litre)", price: 20, type: "veg" }
-        ]
-    }
-];
-
     let cart = [];
-    let currentFilter = 'all';
-    const table = new URLSearchParams(window.location.search).get('t') || "Self";
-    document.getElementById('table-id').innerText = table;
+let currentFilter = 'all';
+
+const table = new URLSearchParams(window.location.search).get('t') || "Self";
+document.getElementById('table-id').innerText = table;
+
+    const menuData = [       
+{
+    category: "Veg Main Course (Gravy)",
+    items: [
+        { name: "Veg Keema Kasturi", price: 280, type: "veg", img: "Veg-Keema-Kasturi.jpg" },
+        { name: "Dum Aloo Punjabi", price: 260, type: "veg", img: "Dam-Aloo-Punjabi .jpg" },
+        { name: "Tandoori Aloo Masala", price: 280, type: "veg", img: "Tandoori-Aloo-Masala.jpg" },
+        { name: "Dal Tadka / Fry", price: 140, type: "veg", img: "Dal-Tadka.jpg" },
+        { name: "Dal Makhani", price: 195, type: "veg", img: "Dal-Makhani.jpg" },
+        { name: "Paneer Tikka Masala", price: 300, type: "veg", img: "Paneer-Tikka-Masala.jpg" }
+            ]
+        },
+        {
+            category: "Non-Veg Main Course (Gravy)",
+            items: [
+                { name: "Butter Chicken (Boneless)", price: 320, type: "non", img: "chicken-butter.jpg" },
+                { name: "Chicken Tikka Masala", price: 320, type: "non", img: "chicken-tikka.jpg" },
+                { name: "Chicken Handi (Full)", price: 520, type: "non", img: "chicken-handi.jpg" },
+                { name: "Mutton Roghan Josh", price: 350, type: "non", img: "chicken-handi.jpg" },
+                { name: "Egg Curry / Masala", price: 200, type: "non", img: "chicken-handi.jpg" }
+            ]
+        },
+        {
+            category: "Fish & Prawns",
+            items: [
+                { name: "Fish Tikka Masala", price: 420, type: "non", img: "chicken handi.jpg" },
+                { name: "Prawns Masala", price: 450, type: "non", img: "chicken handi.jpg" }
+            ]
+        },
+        {
+            category: "Biryani & Rice",
+            items: [
+                { name: "Veg Dum Biryani", price: 260, type: "veg", img: "images/veg-dum-biryani.jpg" },
+                { name: "Chicken Dum Biryani", price: 260, type: "non", img: "images/chicken-dum-biryani.jpg" },
+                { name: "Jeera Rice", price: 140, type: "veg", img: "images/jeera-rice.jpg" },
+                { name: "Steamed Rice", price: 100, type: "veg", img: "images/steamed-rice.jpg  " }
+            ]
+        },
+        {
+            category: "Rotis & Naan",
+            items: [
+                { name: "Tandoori Roti (Butter)", price: 30, type: "veg" },
+                { name: "Garlic Naan", price: 40, type: "veg" },
+                { name: "Butter Kulcha", price: 60, type: "veg" }
+            ]
+        },
+        {
+            category: "Dessert & Drinks",
+            items: [
+                { name: "Fruit Cream", price: 100, type: "veg" },
+                { name: "Mango Lassi", price: 70, type: "veg" },
+                { name: "Mineral Water", price: 20, type: "veg" }
+            ]
+        }
+    ];
 
     function renderMenu(searchTerm = "") {
-        const container = document.getElementById('menu-container');
-        container.innerHTML = "";
-        
-        menuData.forEach(sect => {
-            let filteredItems = sect.items.filter(i => {
-                const matchesSearch = i.name.toLowerCase().includes(searchTerm.toLowerCase());
-                const matchesFilter = currentFilter === 'all' || i.type === currentFilter;
-                return matchesSearch && matchesFilter;
+    const container = document.getElementById('menu-container');
+    let fullHTML = "";
+
+    menuData.forEach((sect, sIdx) => {
+
+        let html = ""; // section HTML
+
+        let filteredItems = sect.items.filter(i => {
+            const matchesSearch = i.name.toLowerCase().includes(searchTerm.toLowerCase());
+            const matchesFilter = currentFilter === 'all' || i.type === currentFilter;
+            return matchesSearch && matchesFilter;
+        });
+
+        if (filteredItems.length > 0) {
+
+            html += `<div class="section-title">${sect.category}</div>`;
+
+            filteredItems.forEach((item, iIdx) => {
+                const noteId = `note-${sIdx}-${iIdx}`;
+
+                html += `
+                <div class="item">
+                    <img src="${item.img}" class="food-img">
+                    <div class="item-row-top">
+                        <div class="item-info">
+                            <div class="item-name">
+                                <span class="dot ${item.type === 'veg' ? 'veg-dot' : 'non-dot'}"></span>
+                                ${item.name}
+                            </div>
+                            <div style="font-size:14px; color:#666;">₹${item.price}</div>
+                        </div>
+                        <button class="add-btn" onclick="addToCart('${item.name}', ${item.price}, '${noteId}')">ADD +</button>
+                    </div>
+                    <input type="text" id="${noteId}" class="custom-note" placeholder="Instructions? (e.g. Less oil)">
+                </div>`;
             });
 
-            if (filteredItems.length > 0) {
-                let html = `<div class="section-title">${sect.category}</div>`;
-                filteredItems.forEach(item => {
-                    html += `
-                        <div class="item">
-                            <div class="item-info">
-                                <div class="item-name">
-                                    <span class="dot ${item.type === 'veg' ? 'veg-dot' : 'non-dot'}"></span>
-                                    ${item.name}
-                                </div>
-                                <div style="font-size:14px; color:#666;">₹${item.price}</div>
-                            </div>
-                            <button class="add-btn" onclick="addToCart('${item.name}', ${item.price})">ADD +</button>
-                        </div>`;
-                });
-                container.innerHTML += html;
-            }
-        });
-    }
+            fullHTML += html; // ✅ correct place
+        }
+    });
 
+    container.innerHTML = fullHTML; // ✅ only once
+}
     function setFilter(f) {
         currentFilter = f;
         document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
@@ -200,34 +337,78 @@
         renderMenu(term);
     }
 
-    function addToCart(name, price) {
-        cart.push({ name, price });
-        updateCartUI();
+    function addToCart(name, price, noteId) {
+    const note = document.getElementById(noteId).value || "None";
+
+    let existing = cart.find(i => i.name === name && i.note === note);
+
+    if (existing) {
+        existing.qty++;
+    } else {
+        cart.push({ name, price, note, qty: 1 });
     }
 
-    function updateCartUI() {
-        const panel = document.getElementById('cart-panel');
-        panel.style.display = cart.length > 0 ? 'block' : 'none';
-        let total = 0;
-        document.getElementById('cart-list').innerHTML = cart.map(i => {
-            total += i.price;
-            return `<div style="display:flex;justify-content:space-between;margin-bottom:5px;"><span>${i.name}</span><span>₹${i.price}</span></div>`;
-        }).join('');
-        document.getElementById('total-price').innerText = total;
-    }
+    document.getElementById(noteId).value = "";
+    updateCartUI();
+}
 
+   function updateCartUI() {
+    const panel = document.getElementById('cart-panel');
+    panel.style.display = cart.length > 0 ? 'flex' : 'none';
+
+    let subtotal = 0;
+
+    document.getElementById('cart-list').innerHTML = cart.map((item, index) => {
+        subtotal += item.price * item.qty;
+
+        return `
+        <div class="cart-item">
+            <div style="flex:1;">
+                <strong>${item.name} x${item.qty}</strong>
+                <div style="font-size:12px; color:#aaa;">Note: ${item.note}</div>
+            </div>
+            <div style="display:flex; align-items:center; gap:5px;">
+                <button onclick="changeQty(${index}, -1)">➖</button>
+                <button onclick="changeQty(${index}, 1)">➕</button>
+                <span>₹${item.price * item.qty}</span>
+            </div>
+        </div>`;
+    }).join('');
+
+    let cgst = subtotal * 0.09;
+    let sgst = subtotal * 0.09;
+    let total = subtotal + cgst + sgst;
+
+    
+    document.getElementById('cgst').innerText = cgst.toFixed(2);
+    document.getElementById('sgst').innerText = sgst.toFixed(2);
+    document.getElementById('total-price').innerText = total.toFixed(2);
+}
     function sendOrder() {
         database.ref('orders').push({
-            table, items: cart, total: document.getElementById('total-price').innerText,
-            status: "New", time: new Date().toLocaleTimeString()
+            table, 
+            items: cart, 
+            total: document.getElementById('total-price').innerText,
+            status: "New", 
+            time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
         }).then(() => {
-            alert("Order Sent!");
+            alert("Order Sent to Kitchen!");
             cart = [];
             updateCartUI();
         });
     }
 
     renderMenu();
+
+    function changeQty(index, change) {
+    cart[index].qty += change;
+
+    if (cart[index].qty <= 0) {
+        cart.splice(index, 1);
+    }
+
+    updateCartUI();
+}
 </script>
 </body>
 </html>
