@@ -4,46 +4,35 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SardaarJi - Scan & Order</title>
-    <!-- Corrected Firebase Scripts -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <style>
         :root { --primary: #e31e24; --veg: #27ae60; --nonveg: #c0392b; --dark: #1a1a1a; }
         body { font-family: 'Segoe UI', Arial, sans-serif; margin: 0; background: #fdfdfd; padding-bottom: 160px; color: #333; }
         .header { background: white; text-align: center; padding: 20px 15px; border-bottom: 5px solid var(--primary); box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
-        .logo-img { width: 140px; height: auto; display: block; margin: 0 auto 10px auto; }
-        .table-tag { display: inline-block; background: #eee; padding: 5px 15px; border-radius: 20px; font-size: 13px; font-weight: bold; color: #666; border: 1px solid #ddd; }
-        .section-title { background: #f8f8f8; padding: 12px 20px; font-weight: 800; color: var(--primary); text-transform: uppercase; border-left: 6px solid var(--primary); margin-top: 15px; font-size: 14px; letter-spacing: 1px; }
+        .logo-img { width: 120px; height: auto; margin-bottom: 10px; }
+        .table-tag { display: inline-block; background: #eee; padding: 5px 15px; border-radius: 20px; font-size: 13px; font-weight: bold; color: #666; }
+        .section-title { background: #f8f8f8; padding: 12px 20px; font-weight: 800; color: var(--primary); text-transform: uppercase; border-left: 6px solid var(--primary); margin-top: 15px; font-size: 14px; }
         .item { background: white; padding: 18px 20px; border-bottom: 1px solid #f0f0f0; }
         .item-header { display: flex; justify-content: space-between; align-items: flex-start; }
-        .icon { width: 14px; height: 14px; border: 1.5px solid; display: inline-flex; align-items: center; justify-content: center; margin-right: 8px; border-radius: 2px; vertical-align: middle; }
-        .icon-veg { border-color: var(--veg); }
-        .icon-veg::after { content: ""; width: 8px; height: 8px; background: var(--veg); border-radius: 50%; display: block; }
-        .icon-non { border-color: var(--nonveg); }
-        .icon-non::after { content: ""; width: 8px; height: 8px; background: var(--nonveg); border-radius: 50%; display: block; }
         .item-name { font-size: 16px; font-weight: 700; color: #222; }
-        .item-price { font-size: 15px; font-weight: 600; color: #555; margin-top: 4px; }
-        .custom-note { width: 100%; margin-top: 12px; padding: 10px; border: 1px solid #e0e0e0; border-radius: 8px; font-size: 13px; box-sizing: border-box; background: #fafafa; outline: none; }
-        .add-btn { background: white; color: var(--primary); border: 2px solid var(--primary); padding: 8px 18px; border-radius: 6px; font-weight: 800; cursor: pointer; transition: 0.2s; }
-        .add-btn:active { background: var(--primary); color: white; transform: scale(0.95); }
-        #cart-panel { position: fixed; bottom: 0; width: 100%; background: var(--dark); color: white; padding: 20px; box-sizing: border-box; display: none; border-radius: 25px 25px 0 0; z-index: 1000; box-shadow: 0 -10px 30px rgba(0,0,0,0.4); }
-        .cart-item { display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #333; }
-        .order-btn { background: var(--veg); color: white; border: none; padding: 15px; width: 100%; border-radius: 12px; font-weight: 800; margin-top: 10px; font-size: 16px; cursor: pointer; text-transform: uppercase; }
+        .custom-note { width: 100%; margin-top: 12px; padding: 10px; border: 1px solid #e0e0e0; border-radius: 8px; font-size: 13px; box-sizing: border-box; }
+        .add-btn { background: white; color: var(--primary); border: 2px solid var(--primary); padding: 8px 18px; border-radius: 6px; font-weight: 800; cursor: pointer; }
+        #cart-panel { position: fixed; bottom: 0; width: 100%; background: var(--dark); color: white; padding: 20px; box-sizing: border-box; display: none; border-radius: 25px 25px 0 0; z-index: 1000; }
+        .order-btn { background: var(--veg); color: white; border: none; padding: 15px; width: 100%; border-radius: 12px; font-weight: 800; margin-top: 10px; font-size: 16px; cursor: pointer; }
     </style>
 </head>
 <body>
 
 <div class="header">
-    <!-- Corrected Direct Link for your Logo -->
-    <img src="https://ibb.co" alt="SardaarJi Logo" class="logo-img">
     <div class="table-tag">TABLE <span id="table-id">...</span></div>
 </div>
 
 <div id="menu-container"></div>
 
 <div id="cart-panel">
-    <div id="cart-list" style="max-height: 150px; overflow-y: auto; margin-bottom: 10px;"></div>
-    <div style="font-size: 18px; display: flex; justify-content: space-between; border-top: 1px solid #444; padding-top: 15px;">
+    <div id="cart-list" style="max-height: 150px; overflow-y: auto;"></div>
+    <div style="font-size: 18px; display: flex; justify-content: space-between; padding: 15px 0;">
         <strong>Total:</strong>
         <strong>₹<span id="total-price">0</span></strong>
     </div>
@@ -51,52 +40,25 @@
 </div>
 
 <script>
-   const firebaseConfig = {
-    apiKey: "AIzaSyDgXIZhn1DrZdLvVA2ZQ3FT7pdvWagDJps",
-    authDomain: "sardaarji-88f52.firebaseapp.com",
-    projectId: "sardaarji-88f52",
-    storageBucket: "sardaarji-88f52.firebasestorage.app",
-    messagingSenderId: "922357484331",
-    appId: "1:922357484331:web:d2dd86f8d512ca66f6536e",
-    // Fixed Database URL
-    databaseURL: "https://sardaarji-88f52-default-rtdb.firebaseio.com" 
-};
+    const firebaseConfig = {
+        apiKey: "AIzaSyDgXIZhn1DrZdLvVA2ZQ3FT7pdvWagDJps",
+        authDomain: "sardaarji-88f52.firebaseapp.com",
+        projectId: "sardaarji-88f52",
+        storageBucket: "sardaarji-88f52.firebasestorage.app",
+        messagingSenderId: "922357484331",
+        appId: "1:922357484331:web:d2dd86f8d512ca66f6536e",
+        databaseURL: "https://sardaarji-88f52-default-rtdb.firebaseio.com"
+    };
     firebase.initializeApp(firebaseConfig);
     const database = firebase.database();
 
     const menuData = [
-        {
-            category: "Main Course (Gravy)",
-            items: [
-                { name: "Veg Keema Kasturi", price: 280, type: "veg" }, { name: "Dum Aloo Masala", price: 260, type: "veg" },
-                { name: "Dum Aloo Punjabi", price: 260, type: "veg" }, { name: "Tandoori Aloo Masala", price: 280, type: "veg" },
-                { name: "Adraki Aloo Gobi", price: 260, type: "veg" }, { name: "Daal Tadka/Fry", price: 140, type: "veg" },
-                { name: "Dal Amritsari", price: 160, type: "veg" }, { name: "Dal Makhani", price: 195, type: "veg" },
-                { name: "Mushroom Do Pyaza", price: 280, type: "veg" }, { name: "Tawa Mushroom Gravy", price: 280, type: "veg" },
-                { name: "Veg Kolhapuri", price: 260, type: "veg" }, { name: "Paneer Kolhapuri", price: 280, type: "veg" },
-                { name: "Paneer Handi", price: 280, type: "veg" }, { name: "Veg Handi", price: 280, type: "veg" },
-                { name: "Malai Kofta", price: 300, type: "veg" }, { name: "Paneer Tikka Masala", price: 300, type: "veg" }
-            ]
-        },
-        {
-            category: "Biryani & Rice",
-            items: [
-                { name: "Veg Dum Biryani", price: 260, type: "veg" }, { name: "Paneer Tikka Biryani", price: 300, type: "veg" },
-                { name: "Chicken Dum Biryani", price: 260, type: "non" }, { name: "Butter Chicken Biryani", price: 320, type: "non" },
-                { name: "Mutton Biryani", price: 360, type: "non" }
-            ]
-        },
-        {
-            category: "Rotis & Naan",
-            items: [
-                { name: "Tandoori Roti (Butter)", price: 30, type: "veg" }, { name: "Garlic Naan", price: 40, type: "veg" },
-                { name: "Lachcha Paratha", price: 40, type: "veg" }
-            ]
-        }
+        { category: "Main Course", items: [{ name: "Veg Keema Kasturi", price: 280 }, { name: "Dal Makhani", price: 195 }] },
+        { category: "Biryani", items: [{ name: "Veg Dum Biryani", price: 260 }, { name: "Chicken Dum Biryani", price: 260 }] }
     ];
 
     let cart = [];
-    const table = new URLSearchParams(window.location.search).get('t') || "Self";
+    const table = new URLSearchParams(window.location.search).get('t') || "Takeaway";
     document.getElementById('table-id').innerText = table;
 
     const menuContainer = document.getElementById('menu-container');
@@ -104,21 +66,20 @@
         let html = `<div class="section-title">${sect.category}</div>`;
         sect.items.forEach((item, iIdx) => {
             const id = `note-${sIdx}-${iIdx}`;
-            const icon = item.type === "veg" ? "icon-veg" : "icon-non";
             html += `<div class="item">
                 <div class="item-header">
-                    <div><span class="icon ${icon}"></span><span class="item-name">${item.name}</span><br><span class="item-price">₹${item.price}</span></div>
+                    <div><span class="item-name">${item.name}</span><br>₹${item.price}</div>
                     <button class="add-btn" onclick="addToCart('${item.name}', ${item.price}, '${id}')">ADD +</button>
                 </div>
-                <input type="text" id="${id}" class="custom-note" placeholder="Instructions? (e.g. less spicy)">
+                <input type="text" id="${id}" class="custom-note" placeholder="Instructions?">
             </div>`;
         });
         menuContainer.innerHTML += html;
     });
 
     function addToCart(name, price, inputId) {
-        const note = document.getElementById(inputId).value || "Regular";
-        cart.push({ id: Date.now(), name, price, note });
+        const note = document.getElementById(inputId).value || "None";
+        cart.push({ name, price, note });
         document.getElementById(inputId).value = ""; 
         renderCart();
     }
@@ -129,24 +90,23 @@
         let total = 0;
         document.getElementById('cart-list').innerHTML = cart.map(i => {
             total += i.price;
-            return `<div class="cart-item"><span>${i.name} (${i.note})</span><span>₹${i.price}</span></div>`;
+            return `<div style="display:flex; justify-content:space-between; font-size:14px; margin-bottom:5px;">
+                <span>${i.name}</span><span>₹${i.price}</span>
+            </div>`;
         }).join('');
         document.getElementById('total-price').innerText = total;
     }
 
     function sendOrderToKitchen() {
         const orderData = { 
-            table, 
-            items: cart, 
-            total: document.getElementById('total-price').innerText, 
-            status: "New", 
-            time: new Date().toLocaleTimeString() 
+            table, items: cart, total: document.getElementById('total-price').innerText, 
+            status: "New", time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) 
         };
         database.ref('orders').push(orderData).then(() => {
-            alert("Order sent to kitchen! 👨‍🍳");
+            alert("Sent! 👨‍🍳");
             cart = [];
             renderCart();
-        }).catch(err => alert("Error: " + err.message));
+        });
     }
 </script>
 </body>
