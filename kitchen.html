@@ -2,31 +2,66 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>SardaarJi Kitchen - Sound Alerts</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>SardaarJi Kitchen App</title>
+    
+    <meta name="theme-color" content="#e31e24">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background: #0a0a0a; color: #fff; padding: 20px; }
-        .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #e31e24; }
+        body { font-family: 'Segoe UI', sans-serif; background: #0a0a0a; color: #fff; margin: 0; padding: 20px; overflow-x: hidden; }
         
-        /* Audio Control Button */
-        #mute-btn { 
-            background: #444; color: white; border: none; padding: 10px 20px; 
-            border-radius: 20px; cursor: pointer; font-weight: bold;
+        .header { 
+            display: flex; justify-content: space-between; align-items: center; 
+            padding-bottom: 15px; border-bottom: 2px solid #e31e24; margin-bottom: 20px;
         }
-        .sound-on { background: #27ae60 !important; }
 
-        #kitchen-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px; margin-top: 20px; }
-        .order-card { background: #1a1a1a; border-radius: 12px; border-top: 8px solid #e31e24; padding: 15px; }
+        #mute-btn { 
+            background: #444; color: white; border: none; padding: 12px 20px; 
+            border-radius: 30px; cursor: pointer; font-weight: bold; font-size: 14px;
+        }
+        .sound-on { background: #27ae60 !important; border: 2px solid white !important; }
+
+        #kitchen-grid { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); 
+            gap: 20px; 
+        }
+
+        .order-card { 
+            background: #1a1a1a; border-radius: 15px; padding: 20px; 
+            border-top: 10px solid #e31e24; box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            position: relative;
+        }
         .card-preparing { border-top-color: #f1c40f; }
-        .btn-done { width: 100%; padding: 12px; margin-top: 10px; cursor: pointer; font-weight: bold; border-radius: 5px; border: none; }
+
+        .item-list { list-style: none; padding: 0; margin: 15px 0; }
+        .item-list li { padding: 8px 0; border-bottom: 1px solid #333; font-size: 18px; }
+        .special-note { color: #f1c40f; font-size: 13px; font-weight: bold; display: block; margin-top: 4px; }
+
+        .timer { font-size: 12px; color: #888; margin-top: 10px; }
+        
+        .btn-action { 
+            width: 100%; padding: 15px; margin-top: 15px; cursor: pointer; 
+            font-weight: 900; border-radius: 10px; border: none; font-size: 16px;
+            text-transform: uppercase;
+        }
+        .btn-start { background: #f1c40f; color: #000; }
+        .btn-done { background: #27ae60; color: #fff; }
     </style>
 </head>
 <body>
 
 <div class="header">
-    <h1>👨‍🍳 KITCHEN ALERTS</h1>
-    <button id="mute-btn" onclick="toggleSound()">🔊 SOUND IS OFF</button>
+    <div style="display:flex; align-items:center; gap:10px;">
+        <span style="font-size:24px;">👨‍🍳</span>
+        <h1 style="margin:0; font-size:20px;">LIVE KITCHEN</h1>
+    </div>
+    <button id="mute-btn" onclick="toggleSound()">🔇 ALERTS OFF</button>
 </div>
 
 <div id="kitchen-grid"></div>
@@ -49,18 +84,16 @@
     const db = firebase.database();
 
     let isMuted = true;
-    let knownOrderIds = [];
+    let seenOrders = new Set();
 
     function toggleSound() {
         isMuted = !isMuted;
         const btn = document.getElementById('mute-btn');
-        btn.innerText = isMuted ? "🔊 SOUND IS OFF" : "🔔 SOUND IS ON";
+        btn.innerText = isMuted ? "🔇 ALERTS OFF" : "🔔 ALERTS ON";
         btn.classList.toggle('sound-on');
-        
-        // Play briefly to "unlock" audio in browser
         if(!isMuted) {
             const audio = document.getElementById('order-chime');
-            audio.play().then(() => audio.pause()); 
+            audio.play().then(() => audio.pause());
         }
     }
 
@@ -68,33 +101,45 @@
         const orders = snap.val();
         const grid = document.getElementById('kitchen-grid');
         grid.innerHTML = "";
-        
         if (!orders) return;
 
-        let hasNewOrder = false;
-        for (let id in orders) {
-            // Check if this is a truly NEW order (not just an update)
-            if (!knownOrderIds.includes(id) && orders[id].status === "New") {
-                hasNewOrder = true;
-                knownOrderIds.push(id);
+        let playAlert = false;
+        
+        // Sort orders by time (Newest first)
+        Object.keys(orders).reverse().forEach(id => {
+            const order = orders[id];
+            if (order.status === "Done") return;
+
+            // Alert logic for truly new orders
+            if (!seenOrders.has(id) && order.status === "New") {
+                playAlert = true;
+                seenOrders.add(id);
             }
 
-            if (orders[id].status === "Done") continue;
-
-            const isPrep = orders[id].status === "Preparing";
+            const isPrep = order.status === "Preparing";
             grid.innerHTML += `
                 <div class="order-card ${isPrep ? 'card-preparing' : ''}">
-                    <h3>TABLE ${orders[id].table}</h3>
-                    <ul>${orders[id].items.map(i => `<li>${i.name}</li>`).join('')}</ul>
-                    <button class="btn-done" onclick="updateStatus('${id}', '${isPrep ? 'Done' : 'Preparing'}')">
-                        ${isPrep ? '✅ SERVED' : '👨‍🍳 START'}
+                    <div style="display:flex; justify-content:space-between;">
+                        <strong style="font-size:22px; color:#e31e24;">TABLE ${order.table}</strong>
+                        <span class="timer">${order.time}</span>
+                    </div>
+                    <ul class="item-list">
+                        ${order.items.map(i => `
+                            <li>
+                                ${i.name}
+                                ${i.note !== "None" ? `<span class="special-note">⚠️ ${i.note}</span>` : ''}
+                            </li>
+                        `).join('')}
+                    </ul>
+                    <button class="btn-action ${isPrep ? 'btn-done' : 'btn-start'}" 
+                            onclick="updateStatus('${id}', '${isPrep ? 'Done' : 'Preparing'}')">
+                        ${isPrep ? '✅ MARK AS SERVED' : '🔥 START COOKING'}
                     </button>
                 </div>
             `;
-        }
+        });
 
-        // Play sound if a new order was detected and sound is ON
-        if (hasNewOrder && !isMuted) {
+        if (playAlert && !isMuted) {
             document.getElementById('order-chime').play();
         }
     });
