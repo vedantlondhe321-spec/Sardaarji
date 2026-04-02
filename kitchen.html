@@ -6,26 +6,26 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <style>
-        body { font-family: sans-serif; background: #111; color: #eee; padding: 20px; }
+        body { font-family: 'Segoe UI', sans-serif; background: #111; color: #eee; padding: 20px; }
         h1 { border-bottom: 2px solid #e31e24; padding-bottom: 10px; display: flex; justify-content: space-between; }
-        #kitchen-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px; }
+        #kitchen-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px; margin-top: 20px; }
         .order-card { background: #222; border-left: 10px solid #e31e24; padding: 20px; border-radius: 12px; }
         .order-header { display: flex; justify-content: space-between; border-bottom: 1px solid #444; margin-bottom: 10px; padding-bottom: 5px; }
         .table-no { font-size: 22px; font-weight: bold; color: #e31e24; }
-        ul { list-style: none; padding: 0; }
-        li { margin-bottom: 8px; font-size: 18px; }
-        .item-note { display: block; font-size: 13px; color: #f1c40f; }
-        .btn-action { color: white; border: none; padding: 12px; width: 100%; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 10px; }
+        ul { list-style: none; padding: 0; margin: 15px 0; }
+        li { margin-bottom: 10px; font-size: 18px; border-bottom: 1px dashed #333; padding-bottom: 5px; }
+        .item-note { display: block; font-size: 13px; color: #f1c40f; font-style: italic; }
+        .btn-action { color: white; border: none; padding: 15px; width: 100%; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 10px; }
         .btn-preparing { background: #f39c12; }
         .btn-done { background: #27ae60; }
     </style>
 </head>
 <body>
     <h1>
-        <span>👨‍🍳 Active Kitchen</span>
-        <small id="status">Connecting...</small>
+        <span>👨‍🍳 Active Orders</span>
+        <small id="status" style="font-size:14px; color:#888;">Connecting...</small>
     </h1>
-    <div id="kitchen-list">Waiting...</div>
+    <div id="kitchen-list">No orders yet...</div>
 
     <script>
         const firebaseConfig = {
@@ -40,8 +40,8 @@
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
 
-        database.ref('.info/connected').on('value', s => {
-            document.getElementById('status').innerText = s.val() ? "🟢 Online" : "🔴 Offline";
+        database.ref('.info/connected').on('value', snap => {
+            document.getElementById('status').innerText = snap.val() ? "🟢 Online" : "🔴 Offline";
         });
 
         database.ref('orders').on('value', (snap) => {
@@ -49,17 +49,23 @@
             const list = document.getElementById('kitchen-list');
             list.innerHTML = "";
             
+            if(!orders) {
+                list.innerHTML = "<div style='color:#666'>Standing by for new orders...</div>";
+                return;
+            }
+
             for (let id in orders) {
                 const o = orders[id];
                 if (o.status === "Done") continue;
 
                 const borderColor = o.status === "Preparing" ? "#f1c40f" : "#e31e24";
-                
+                const statusTag = o.status === "Preparing" ? "⏳ COOKING" : "🆕 NEW";
+
                 list.innerHTML += `
                     <div class="order-card" style="border-left-color: ${borderColor}">
                         <div class="order-header">
-                            <span class="table-no">TABLE: ${o.table}</span>
-                            <span style="font-size:12px;">${o.time}</span>
+                            <span class="table-no">T-${o.table}</span>
+                            <span style="color:${borderColor}; font-weight:bold;">${statusTag}</span>
                         </div>
                         <ul>${o.items.map(i => `<li><b>${i.name}</b><span class="item-note">Note: ${i.note}</span></li>`).join('')}</ul>
                         ${o.status !== "Preparing" ? 
